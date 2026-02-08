@@ -8,8 +8,29 @@
 </head>
 <body>
     <div class="container">
-        <h1> FlashEdu</h1>
+        <h1>FlashEdu</h1>
         
+        <div id="login-form">
+            <h2>Login</h2>
+            <input type="email" id="login-email" placeholder="Email">
+            <input type="password" id="login-password" placeholder="Password">
+            <button onclick="login()">Login</button>
+            <p>Dont have an account? <a href="#" onclick="showRegister()">Register here</a></p>
+        </div>
+
+        <div id="register-form" style="display: none;">
+            <h2>Create Account</h2>
+            <input type="text" id="reg-name" placeholder="Full Name">
+            <input type="email" id="reg-email" placeholder="Email">
+            <input type="password" id="reg-password" placeholder="Password">
+            <select id="reg-role">
+                <option value="Student">Student</option>
+                <option value="Staff">Staff</option>
+            </select>
+            <button onclick="register()">Sign Up</button>
+            <p>Already have an account? <a href="#" onclick="showLogin()">Login here</a></p>
+        </div>
+
         <p id="error-message" style="color: red; margin-top: 10px;"></p>
     </div>
 
