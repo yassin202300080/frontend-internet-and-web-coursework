@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classroom - FlashEdu</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<style>
+    .assignment-card {
+        border: 1px solid #ddd;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        background: white;
+        border-left: 5px solid #6a0dad;
+    }
+    .status-badge {
+        background: #eee;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 12px;
+        font-weight: bold;
+        float: right;
+    }
+    textarea {
+        width: 100%;
+        height: 80px;
+        margin-top: 10px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+</style>
+
+<nav style="background:#6a0dad; color:white; padding:15px; text-align:center;">
+    <a href="dashboard.html" style="color:white; font-weight:bold; text-decoration: none;">&larr; Back to Dashboard</a>
+</nav>
+
+<div class="container" style="margin-top: 30px; width: 80%; max-width: 800px; margin: 30px auto;">
+    <h1 id="class-title">Classroom</h1>
+
+    <div id="teacher-controls" style="display:none; background:#f9f9f9; padding:20px; margin-bottom:30px; border-radius:10px; border: 1px solid #ddd;">
+        <h3 style="margin-top:0;">➕ Post New Assignment</h3>
+        <input type="text" id="new-title" placeholder="Assignment Title" style="width: 100%; padding: 10px; margin-bottom: 10px; box-sizing: border-box;">
+        <input type="date" id="new-date" style="padding: 10px; width: 100%; margin-bottom: 10px; box-sizing: border-box;">
+        <textarea id="new-desc" placeholder="Instructions..." style="margin-bottom: 10px;"></textarea>
+        <button onclick="createAssignment()" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Post Assignment</button>
+    </div>
+
+    <div id="assignments-list">
+        <p>Loading assignments...</p>
+    </div>
+</div>
+
+<div id="gradingModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <h2>Student Submissions</h2>
+        <div id="submissions-list"></div>
+    </div>
+</div>
+
+</body>
+</html>
