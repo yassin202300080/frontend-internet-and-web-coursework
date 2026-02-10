@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlashEdu - Dashboard</title>
+  <link rel="stylesheet" href="style.css"> 
+</head>
+<body>
+  <nav style="background:#6a0dad; color:white; padding:15px; text-align:center;">
+    <a href="#" style="margin-right:20px; color:white;">Home</a>
+    <a href="#class-section" style="margin-right:20px; color:white;">My Classes</a>
+    <a href="#" onclick="logout()" style="color:white;">Logout</a>
+  </nav>
+
+  <div style="width:80%; max-width:800px; margin:30px auto;">
+
+      <h1 id="welcome-msg">Welcome, User!</h1>
+
+      <div style="border:1px solid #ddd; padding:20px; border-radius:10px; margin-top:30px;">
+        <h2 id="action-title">Loading...</h2>
+        <input type="text" id="action-input" placeholder="Loading..." style="padding:10px; width:60%;">
+        <button onclick="handleAction()" style="padding:10px 20px; background:#6a0dad; color:white;">Submit</button>
+      </div>
+
+      <div id="class-section" style="margin-top:30px;">
+        <h2>Your Classes</h2>
+        <div id="class-list">
+          <p>Loading classes...</p>
+        </div>
+      </div>
+
+  </div>
+
+  <footer style="text-align:center; margin-top:50px; color:#666;">
+    <p>FlashEdu System | support@flashedu.com</p>
+  </footer>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
