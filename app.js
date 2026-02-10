@@ -1,15 +1,18 @@
 const API_URL = "http://localhost:3000/api";
 
+function decodeToken(token) {
+    const payload = token.split('.')[1];
+    return JSON.parse(atob(payload));
+}
+
 function showRegister() {
     document.getElementById("login-form").style.display = "none";
     document.getElementById("register-form").style.display = "block";
-    document.getElementById("error-message").innerText = "";
 }
 
 function showLogin() {
     document.getElementById("register-form").style.display = "none";
     document.getElementById("login-form").style.display = "block";
-    document.getElementById("error-message").innerText = "";
 }
 
 async function register() {
@@ -18,28 +21,19 @@ async function register() {
     const password = document.getElementById("reg-password").value;
     const role = document.getElementById("reg-role").value;
 
-    if (name === "" || email === "" || password === "") {
-        document.getElementById("error-message").innerText = "missing field fields";
-        return;
-    }
+    const response = await fetch(API_URL + "/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password, role })
+    });
 
-    try {
-        const response = await fetch(API_URL + "/register", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, email, password, role })
-        });
+    const data = await response.json();
 
-        const data = await response.json();
-
-        if (response.ok) {
-            alert("Registered successfully");
-            showLogin();
-        } else {
-            document.getElementById("error-message").innerText = data.error;
-        }
-    } catch (e) {
-        document.getElementById("error-message").innerText = "Server error";
+    if (response.ok) {
+        alert("Registered successfully");
+        showLogin();
+    } else {
+        alert(data.error);
     }
 }
 
@@ -47,30 +41,32 @@ async function login() {
     const email = document.getElementById("login-email").value;
     const password = document.getElementById("login-password").value;
 
-    if (email === "" || password === "") {
-        document.getElementById("error-message").innerText = "enter email and password";
-        return;
-    }
+    const response = await fetch(API_URL + "/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+    });
 
-    try {
-        const response = await fetch(API_URL + "/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password })
-        });
+    const data = await response.json();
 
-        const data = await response.json();
-
-        if (response.ok) {
-            localStorage.setItem("token", data.token);
+    if (response.ok) {
+        localStorage.setItem("token", data.token);
+        
+        if (data.user) {
             localStorage.setItem("user", JSON.stringify(data.user));
-
-            alert("Login successful");
-            window.location.href = "dashboard.html";
         } else {
-            document.getElementById("error-message").innerText = data.error;
+            const user = decodeToken(data.token);
+            localStorage.setItem("user", JSON.stringify(user));
         }
-    } catch (e) {
-        document.getElementById("error-message").innerText = "Cannot connect to server";
+
+        window.location.href = "dashboard.html";
+    } else {
+        alert(data.error);
     }
+}
+
+function logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "index.html";
 }

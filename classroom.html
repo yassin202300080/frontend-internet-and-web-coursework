@@ -43,7 +43,7 @@
     <h1 id="class-title">Classroom</h1>
 
     <div id="teacher-controls" style="display:none; background:#f9f9f9; padding:20px; margin-bottom:30px; border-radius:10px; border: 1px solid #ddd;">
-        <h3 style="margin-top:0;">➕ Post New Assignment</h3>
+        <h3 style="margin-top:0;">Post New Assignment</h3>
         <input type="text" id="new-title" placeholder="Assignment Title" style="width: 100%; padding: 10px; margin-bottom: 10px; box-sizing: border-box;">
         <input type="date" id="new-date" style="padding: 10px; width: 100%; margin-bottom: 10px; box-sizing: border-box;">
         <textarea id="new-desc" placeholder="Instructions..." style="margin-bottom: 10px;"></textarea>
@@ -63,5 +63,118 @@
     </div>
 </div>
 
+<script>
+    const API_URL = "http://localhost:3000/api";
+    const classId = localStorage.getItem('currentClassId');
+    const user = JSON.parse(localStorage.getItem('user'));
+    const token = localStorage.getItem('token');
+
+    // Setup page
+    if (!classId || !user || !token) {
+        window.location.href = 'dashboard.html';
+    }
+
+    const className = localStorage.getItem('currentClassName');
+    document.getElementById('class-title').innerText = className;
+    
+    //setup teacher dashboard
+    if (user.role === 'Staff') {
+        document.getElementById('teacher-controls').style.display = 'block';
+    }
+    window.onload = loadAssignments;
+
+    //assginment list
+    async function loadAssignments() {
+        const token = localStorage.getItem('token');
+        
+        try {
+            const res = await fetch(API_URL + '/assignments?classId=' + classId, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            
+            const assignments = await res.json();
+            const container = document.getElementById('assignments-list');
+            container.innerHTML = "";
+
+            if (!assignments || assignments.length === 0) {
+                container.innerHTML = "<p>No assignments yet.</p>";
+                return;
+            }
+
+            assignments.forEach(a => {
+                const div = document.createElement('div');
+                div.className = "assignment-card";
+                
+                let html = "<h3>" + a.title + " <span class='status-badge'>Due: " + a.dueDate + "</span></h3>";
+                html += "<p>" + a.description + "</p>";
+                
+                if (user.role === 'Staff') {
+                    html += "<button onclick=\"viewSubmissions(" + a.id + ")\" style=\"background:#6a0dad; color:white; padding:8px 15px; border:none; border-radius:5px; cursor:pointer;\">View Submissions</button>";
+                } else {
+                    html += "<button onclick=\"viewAssignment(" + a.id + ", '" + a.title.replace(/'/g, "\\'") + "', '" + a.description.replace(/'/g, "\\'") + "')\" style=\"background:#28a745; color:white; padding:8px 15px; border:none; border-radius:5px; cursor:pointer;\">Submit Homework</button>";
+                }
+                
+                div.innerHTML = html;
+                container.appendChild(div);
+            });
+        } catch (e) {
+            document.getElementById('assignments-list').innerHTML = "<p>Error loading assignments</p>";
+        }
+    }
+
+    // Create assignment 
+    async function createAssignment() {
+        const title = document.getElementById('new-title').value;
+        const dueDate = document.getElementById('new-date').value;
+        const description = document.getElementById('new-desc').value;
+        
+        if (!title || !dueDate || !description) {
+            alert("Please fill in all fields");
+            return;
+        }
+        
+        //confirm class code before posting assignment
+        const classCode = prompt("Please enter the class code to confirm:");
+        if (!classCode) return;
+
+        try {
+            const res = await fetch(API_URL + '/assignments', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({ title, description, dueDate, classCode })
+            });
+
+            if (res.ok) {
+                alert("Assignment posted!");
+                document.getElementById('new-title').value = "";
+                document.getElementById('new-date').value = "";
+                document.getElementById('new-desc').value = "";
+                loadAssignments();
+            } else {
+                const data = await res.json();
+                alert(data.error);
+            }
+        } catch (e) {
+            alert("Server error");
+        }
+    }
+
+    //view assignment details
+    function viewAssignment(id, title, desc) {
+        localStorage.setItem('currentAssignmentId', id);
+        localStorage.setItem('currentAssignmentTitle', title);
+        localStorage.setItem('currentAssignmentDesc', desc);
+        window.location.href = 'assignment.html?id=' + id;
+    }
+
+    //staff view submissions
+    function viewSubmissions(id) {
+        localStorage.setItem('currentAssignmentId', id);
+        window.location.href = 'assignment.html?id=' + id;
+    }
+</script>
+
 </body>
-</html>
