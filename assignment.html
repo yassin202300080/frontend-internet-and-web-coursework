@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignment - FlashEdu</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav style="background:#6a0dad; color:white; padding:15px; text-align:center;">
+    <a href="javascript:history.back()" style="color:white; font-weight:bold; text-decoration:none;">Back to Class</a>
+</nav>
+
+<div class="container" style="margin: 30px auto; width: 80%; max-width: 800px;">
+    <h1>Assignment Details</h1>
+    
+    <div id="student-view" style="display:none;">
+        <h3>Your Submission</h3>
+        <textarea id="submission-text" placeholder="Type your answer here..." style="width:100%; height:150px; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:5px;"></textarea>
+        <button onclick="submitWork()" style="background:#28a745; color:white; padding:10px 20px; border:none; border-radius:5px; cursor:pointer;">Submit Assignment</button>
+        
+        <div id="feedback-area" style="margin-top:20px; padding:15px; background:#f1f3f6; display:none; border-radius:8px;">
+            <h4 style="color:#6a0dad;">Teacher Feedback</h4>
+            <p><b>Grade:</b> <span id="grade-display">-</span></p>
+            <p><b>Comment:</b> <span id="comment-display">-</span></p>
+        </div>
+    </div>
+
+    <div id="staff-view" style="display:none;">
+        <h3>Student Submissions</h3>
+        <div id="submission-list"></div>
+    </div>
+</div>
+
+<script>
+    const API_URL = "http://localhost:3000/api";
+    const user = JSON.parse(localStorage.getItem('user'));
+    const token = localStorage.getItem('token');
+    const assignmentId = localStorage.getItem('currentAssignmentId');
+
+    if (!user || !token || !assignmentId) {
+        window.location.href = 'classroom.html';
+    }
+
+    //display assignment title and description
+    const title = localStorage.getItem('currentAssignmentTitle');
+    const description = localStorage.getItem('currentAssignmentDesc');
+
+    if (title) {
+        document.querySelector('h1').innerText = title;
+    }
+
+    if (description) {
+        const descDiv = document.createElement('div');
+        descDiv.style.cssText = "background:#f9f9f9; padding:15px; margin-bottom:20px; border-radius:8px; border-left:5px solid #6a0dad;";
+        descDiv.innerHTML = "<h3 style=\"margin-top:0; color:#6a0dad;\">Instructions</h3><p>" + description + "</p>";
+        
+        const container = document.querySelector('.container');
+        const h1 = container.querySelector('h1');
+        h1.parentNode.insertBefore(descDiv, h1.nextSibling);
+    }
+
+    if (user.role === 'Student') {
+        document.getElementById('student-view').style.display = 'block';
+        loadMySubmission();
+    } else {
+        document.getElementById('staff-view').style.display = 'block';
+        loadAllSubmissions();
+    }
+
+    //student submit assignment
+    async function submitWork() {
+        const text = document.getElementById('submission-text').value;
+        
+        if (!text) {
+            alert("Please enter your submission");
+            return;
+        }
+
+        try {
+            const res = await fetch(API_URL + '/submissions', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'Authorization': 'Bearer ' + token 
+                },
+                body: JSON.stringify({ assignmentId: assignmentId, submissionText: text })
+            });
+
+            const data = await res.json();
+            
+            if (res.ok) {
+                alert("Submitted!");
+                loadMySubmission();
+            } else {
+                alert(data.error);
+            }
+        } catch (e) {
+            alert("Error submitting");
+        }
+    }
+
+    //student load submission and feedback
+    async function loadMySubmission() {
+        const res = await fetch(API_URL + '/assignments/' + assignmentId + '/my-submission', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        const data = await res.json();
+        
+        if (data && data.submissionText) {
+            document.getElementById('submission-text').value = data.submissionText;
+            document.getElementById('submission-text').disabled = true;
+            
+            if (data.grade) {
+                document.getElementById('feedback-area').style.display = 'block';
+                document.getElementById('grade-display').innerText = data.grade;
+                document.getElementById('comment-display').innerText = data.feedback;
+            }
+        }
+    }
+
+    //staff submissions list
+    async function loadAllSubmissions() {
+        const res = await fetch(API_URL + '/assignments/' + assignmentId + '/submissions', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        const subs = await res.json();
+        const list = document.getElementById('submission-list');
+        
+        if (!subs || subs.length === 0) {
+            list.innerHTML = "<p>No submissions yet.</p>";
+            return;
+        }
+
+        list.innerHTML = "";
+        subs.forEach(s => {
+            const div = document.createElement('div');
+            div.style = "border-bottom:1px solid #ddd; padding:15px; margin-bottom:15px;";
+            div.innerHTML = "<p><b>Student:</b> " + s.studentName + "</p>" +
+                               "<p style=\"background:#f9f9f9; padding:10px; border-radius:5px;\">" + s.submissionText + "</p>" +
+                               "<div style=\"margin-top:10px;\">" +
+                               "<input type=\"number\" id=\"grade-" + s.id + "\" placeholder=\"Grade\" style=\"width:100px; padding:8px; margin-right:10px;\">" +
+                               "<input type=\"text\" id=\"feed-" + s.id + "\" placeholder=\"Feedback\" style=\"width:250px; padding:8px; margin-right:10px;\">" +
+                               "<button onclick=\"gradeSubmission(" + s.id + ")\" style=\"background:#6a0dad; color:white; padding:8px 15px; border:none; border-radius:5px; cursor:pointer;\">Save Grade</button>" +
+                               "</div>";
+            list.appendChild(div);
+        });
+    }
+
+    //staff save grade
+    async function gradeSubmission(submissionId) {
+        const grade = document.getElementById('grade-' + submissionId).value;
+        const feedback = document.getElementById('feed-' + submissionId).value;
+        
+        if (!grade) {
+            alert("please  grade");
+            return;
+        }
+
+        try {
+            const res = await fetch(API_URL + '/submissions/grade', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'Authorization': 'Bearer ' + token 
+                },
+                body: JSON.stringify({ submissionId: submissionId, grade: grade, feedback: feedback })
+            });
+
+            const data = await res.json();
+            
+            if (res.ok) {
+                alert("Grade saved!");
+                loadAllSubmissions();
+            } else {
+                alert(data.error);
+            }
+        } catch (e) {
+            alert("Error saving grade");
+        }
+    }
+</script>
+
+</body>
+</html>
